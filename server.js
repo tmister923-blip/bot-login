@@ -1190,7 +1190,7 @@ app.get('/api/health', (req, res) => {
 
 // Serve the main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'dashobard.html'));
 });
 
 // Serve the dashboard page
@@ -3841,3 +3841,4 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
