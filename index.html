@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Bot Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="header">
+                <i class="fab fa-discord"></i>
+                <h1>Discord Bot Login</h1>
+                <p>Enter your bot token to authenticate</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="botToken">
+                        <i class="fas fa-key"></i>
+                        Bot Token
+                    </label>
+                    <input 
+                        type="password" 
+                        id="botToken" 
+                        name="botToken" 
+                        placeholder="Enter your Discord bot token"
+                        required
+                    >
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        Your bot token can be found in the Discord Developer Portal
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login with Bot Token
+                </button>
+                
+                <button type="button" id="testBtn" class="test-btn" style="margin-top: 10px; background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+                    <i class="fas fa-bug"></i>
+                    Test Connection
+                </button>
+            </form>
+            
+            <div id="status" class="status-message"></div>
+            
+            <div class="help-section">
+                <h3>How to get your bot token:</h3>
+                <ol>
+                    <li>Go to <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a></li>
+                    <li>Select your bot application</li>
+                    <li>Go to the "Bot" section</li>
+                    <li>Click "Reset Token" or copy your existing token</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
