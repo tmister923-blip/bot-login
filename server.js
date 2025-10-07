@@ -1404,10 +1404,12 @@ app.post('/api/music/connect-lavalink', async (req, res) => {
 
                 client.riffy.on("nodeConnect", (node) => {
                     console.log(`🎵 Lavalink node "${node.name}" connected.`);
+                    console.log(`🎵 Node info:`, JSON.stringify(node, null, 2));
                 });
 
                 client.riffy.on("nodeError", (node, error) => {
                     console.log(`❌ Lavalink node "${node.name}" error: ${error.message}`);
+                    console.log(`❌ Node error details:`, JSON.stringify(error, null, 2));
                 });
 
                 client.riffy.on("trackStart", async (player, track) => {
@@ -1436,6 +1438,8 @@ app.post('/api/music/connect-lavalink', async (req, res) => {
                 // Handle voice state updates
                 client.on("raw", (d) => {
                     if (d.t === "VOICE_STATE_UPDATE" || d.t === "VOICE_SERVER_UPDATE") {
+                        console.log(`🎵 Voice event received: ${d.t}`);
+                        console.log(`🎵 Voice event data:`, JSON.stringify(d, null, 2));
                         client.riffy.updateVoiceState(d);
                     }
                 });
@@ -1580,10 +1584,22 @@ app.post('/api/music/play', async (req, res) => {
 
         // The createConnection method should handle the voice connection automatically
         console.log('🎵 Connection should be established automatically by createConnection');
+        console.log('🎵 Player state before wait:', {
+            connected: player.connected,
+            voiceChannelId: player.voiceChannelId,
+            playing: player.playing,
+            paused: player.paused
+        });
         
         // Wait a moment for the connection to establish
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         console.log('🎵 Connection established, proceeding with playback');
+        console.log('🎵 Player state after wait:', {
+            connected: player.connected,
+            voiceChannelId: player.voiceChannelId,
+            playing: player.playing,
+            paused: player.paused
+        });
 
         // Play the track using the correct Riffy method
         console.log('🎵 Playing track data:', trackUrl.substring(0, 50) + '...');
