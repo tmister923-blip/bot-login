@@ -1536,13 +1536,39 @@ app.post('/api/music/play', async (req, res) => {
         let player = client.riffy.players.get(guildId);
         if (!player) {
             console.log('🎵 Creating new player for guild:', guildId);
-            player = client.riffy.createPlayer({
-                guildId: guildId,
-                voiceChannelId: voiceChannel.id,
-                textChannelId: null, // We'll handle this separately
-                volume: 50,
-                selfDeaf: true
-            });
+            console.log('🎵 Voice channel ID:', voiceChannel.id);
+            console.log('🎵 Guild ID type:', typeof guildId);
+            
+            try {
+                // Try different parameter format for Riffy
+                player = client.riffy.createPlayer({
+                    guildId: guildId,
+                    voiceChannelId: voiceChannel.id,
+                    textChannelId: null,
+                    volume: 50,
+                    selfDeaf: true,
+                    selfMute: false,
+                    node: client.riffy.nodes.values().next().value
+                });
+                console.log('🎵 Player created successfully');
+            } catch (error) {
+                console.error('🎵 Error creating player:', error);
+                // Try alternative approach
+                try {
+                    console.log('🎵 Trying alternative player creation...');
+                    player = client.riffy.createPlayer(guildId, {
+                        voiceChannelId: voiceChannel.id,
+                        textChannelId: null,
+                        volume: 50,
+                        selfDeaf: true,
+                        selfMute: false
+                    });
+                    console.log('🎵 Alternative player creation successful');
+                } catch (error2) {
+                    console.error('🎵 Alternative player creation failed:', error2);
+                    throw error2;
+                }
+            }
         } else {
             console.log('🎵 Using existing player for guild:', guildId);
         }
