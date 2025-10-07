@@ -1588,17 +1588,12 @@ app.post('/api/music/play', async (req, res) => {
         if (!player.voiceChannelId || player.voiceChannelId !== voiceChannel.id) {
             console.log('🎵 Connecting to voice channel:', voiceChannel.id);
             try {
-                // First, manually join the voice channel through Discord API
-                console.log('🎵 Manually joining voice channel through Discord API...');
-                await voiceChannel.join();
-                console.log('🎵 Successfully joined voice channel through Discord API');
-                
-                // Then connect the Riffy player
+                // Let Riffy handle the voice connection
                 await player.connect(voiceChannel.id);
                 console.log('🎵 Successfully connected Riffy player to voice channel');
                 
                 // Wait a moment for the connection to establish
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 3000));
                 console.log('🎵 Connection established, proceeding with playback');
             } catch (connectError) {
                 console.error('🎵 Failed to connect to voice channel:', connectError);
