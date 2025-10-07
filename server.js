@@ -1686,6 +1686,39 @@ app.post('/api/music/pause', async (req, res) => {
     }
 });
 
+app.post('/api/music/next', async (req, res) => {
+    try {
+        const { guildId } = req.body;
+        
+        if (!guildId) {
+            return res.status(400).json({ error: 'Guild ID required' });
+        }
+
+        // Get the active client
+        if (activeClients.size === 0) {
+            return res.status(400).json({ error: 'No bot client available' });
+        }
+
+        const client = Array.from(activeClients.values())[0];
+        const player = client.riffy.players.get(guildId);
+        
+        if (!player) {
+            return res.status(400).json({ error: 'No player found for this guild' });
+        }
+
+        // Skip to next track
+        if (player.queue.length > 0) {
+            player.skip();
+            res.json({ success: true, message: 'Skipped to next track' });
+        } else {
+            res.status(400).json({ error: 'No tracks in queue to skip to' });
+        }
+    } catch (error) {
+        console.error('Music next error:', error);
+        res.status(500).json({ error: 'Failed to skip track', details: error.message });
+    }
+});
+
 app.post('/api/music/stop', async (req, res) => {
     try {
         const { guildId } = req.body;
