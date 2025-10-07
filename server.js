@@ -1423,6 +1423,13 @@ app.post('/api/music/connect-lavalink', async (req, res) => {
                     console.log(`🎵 Track ended: ${track.info.title}`);
                 });
 
+                // Handle voice state updates
+                client.on("raw", (d) => {
+                    if (d.t === "VOICE_STATE_UPDATE" || d.t === "VOICE_SERVER_UPDATE") {
+                        client.riffy.updateVoiceState(d);
+                    }
+                });
+
                 client.riffy.init(client.user.id);
             }
             
@@ -1522,9 +1529,13 @@ app.post('/api/music/play', async (req, res) => {
 
         const voiceChannel = member.voice.channel;
         
+        console.log(`🎵 Attempting to play track: ${trackUrl}`);
+        console.log(`🎵 User ${userId} in voice channel: ${voiceChannel.name} (${voiceChannel.id})`);
+        
         // Get or create player
         let player = client.riffy.players.get(guildId);
         if (!player) {
+            console.log('🎵 Creating new player for guild:', guildId);
             player = client.riffy.createPlayer({
                 guildId: guildId,
                 voiceChannelId: voiceChannel.id,
@@ -1532,14 +1543,20 @@ app.post('/api/music/play', async (req, res) => {
                 volume: 50,
                 selfDeaf: true
             });
+        } else {
+            console.log('🎵 Using existing player for guild:', guildId);
         }
 
         // Connect to voice channel if not already connected
         if (!player.voiceChannelId || player.voiceChannelId !== voiceChannel.id) {
+            console.log('🎵 Connecting to voice channel:', voiceChannel.id);
             await player.connect(voiceChannel.id);
+        } else {
+            console.log('🎵 Already connected to voice channel:', voiceChannel.id);
         }
 
         // Play the track
+        console.log('🎵 Playing track:', trackUrl);
         await player.play(trackUrl);
 
         res.json({ 
