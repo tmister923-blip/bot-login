@@ -1529,6 +1529,17 @@ app.post('/api/music/play', async (req, res) => {
 
         const voiceChannel = member.voice.channel;
         
+        // Check if bot has permission to join the voice channel
+        const botMember = guild.members.cache.get(client.user.id);
+        if (!botMember) {
+            return res.status(400).json({ error: 'Bot is not in the guild' });
+        }
+        
+        const permissions = voiceChannel.permissionsFor(botMember);
+        if (!permissions.has('Connect') || !permissions.has('Speak')) {
+            return res.status(400).json({ error: 'Bot does not have permission to join or speak in this voice channel' });
+        }
+        
         console.log(`🎵 Attempting to play track: ${trackUrl}`);
         console.log(`🎵 User ${userId} in voice channel: ${voiceChannel.name} (${voiceChannel.id})`);
         
@@ -1576,14 +1587,30 @@ app.post('/api/music/play', async (req, res) => {
         // Connect to voice channel if not already connected
         if (!player.voiceChannelId || player.voiceChannelId !== voiceChannel.id) {
             console.log('🎵 Connecting to voice channel:', voiceChannel.id);
-            await player.connect(voiceChannel.id);
+            try {
+                await player.connect(voiceChannel.id);
+                console.log('🎵 Successfully connected to voice channel');
+                
+                // Wait a moment for the connection to establish
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('🎵 Connection established, proceeding with playback');
+            } catch (connectError) {
+                console.error('🎵 Failed to connect to voice channel:', connectError);
+                throw connectError;
+            }
         } else {
             console.log('🎵 Already connected to voice channel:', voiceChannel.id);
         }
 
         // Play the track
         console.log('🎵 Playing track:', trackUrl);
-        await player.play(trackUrl);
+        try {
+            await player.play(trackUrl);
+            console.log('🎵 Track playback started successfully');
+        } catch (playError) {
+            console.error('🎵 Failed to play track:', playError);
+            throw playError;
+        }
 
         res.json({ 
             success: true, 
