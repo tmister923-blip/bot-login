@@ -1487,7 +1487,8 @@ app.post('/api/music/search', async (req, res) => {
             thumbnail: track.info.artworkUrl || `https://img.youtube.com/vi/${track.info.identifier}/hqdefault.jpg`,
             url: track.info.uri || `https://www.youtube.com/watch?v=${track.info.identifier}`, // Use YouTube URL instead of base64 track
             identifier: track.info.identifier,
-            trackData: track.track // Keep the base64 track data for playback
+            trackData: track.track, // Keep the base64 track data for playback
+            fullTrack: track // Store the complete track object
         }));
 
         res.json({ success: true, results: formattedResults });
@@ -1580,25 +1581,18 @@ app.post('/api/music/play', async (req, res) => {
         console.log('🎵 Track data length:', trackUrl.length);
         
         try {
-            // The trackUrl is actually base64-encoded track data from the search
-            // We need to decode it and use it directly
-            console.log('🎵 Using pre-resolved track data...');
+            // The trackUrl is actually a JSON-encoded full track object from the search
+            console.log('🎵 Using full track object from search...');
             
-            // Create a track object from the base64 data
-            const track = {
-                track: trackUrl, // This is the base64 track data
-                info: {
-                    title: 'Track from search',
-                    author: 'Unknown',
-                    length: 0,
-                    identifier: 'search-result'
-                }
-            };
+            // Parse the full track object
+            const fullTrack = JSON.parse(decodeURIComponent(trackUrl));
+            console.log('🎵 Track title:', fullTrack.info.title);
+            console.log('🎵 Track author:', fullTrack.info.author);
             
             console.log('🎵 Adding track to queue...');
             
-            // Add track to queue
-            player.queue.add(track);
+            // Add the complete track object to queue
+            player.queue.add(fullTrack);
             
             // Play if not already playing
             if (!player.playing && !player.paused) {
