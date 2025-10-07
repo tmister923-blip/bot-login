@@ -3870,7 +3870,7 @@ async function handlePlayCommand(message) {
         const initialResponse = await message.reply(`🔍 Searching for: **${songQuery}**...`);
         
         try {
-            // Search for the track using Lavalink
+            // Search for the track using Lavalink (same as music player tab)
             const searchResults = await client.riffy.resolve({
                 query: songQuery,
                 requester: { id: userId, username: user.username }
@@ -3884,13 +3884,18 @@ async function handlePlayCommand(message) {
             const track = searchResults.tracks[0];
             console.log(`🎵 Found track: ${track.info.title} by ${track.info.author}`);
             
-            // Get or create player
+            // Use the same logic as the /api/music/play endpoint
+            console.log(`🎵 Attempting to play track: ${track.info.title}`);
+            console.log(`🎵 User ${userId} in voice channel: ${voiceChannel.name} (${voiceChannel.id})`);
+            
+            // Get or create player using the correct Riffy method
             let player = client.riffy.players.get(guildId);
             if (!player) {
-                console.log(`🎵 Creating new player for guild: ${guildId}`);
-                console.log(`🎵 Voice channel ID: ${voiceChannel.id}`);
+                console.log('🎵 Creating new connection for guild:', guildId);
+                console.log('🎵 Voice channel ID:', voiceChannel.id);
                 
                 try {
+                    // Use the correct Riffy method: createConnection
                     player = client.riffy.createConnection({
                         guildId: guildId,
                         voiceChannel: voiceChannel.id,
@@ -3906,21 +3911,42 @@ async function handlePlayCommand(message) {
             } else {
                 console.log('🎵 Using existing connection for guild:', guildId);
             }
-            
+
             // Wait a moment for the connection to establish
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            console.log('🎵 Connection established, proceeding with playback');
             
-            // Add track to queue
-            player.queue.add(track);
-            
-            // Play if not already playing
-            if (!player.playing && !player.paused) {
-                await player.play();
-                console.log('🎵 Track playback started successfully');
+            try {
+                console.log('🎵 Using full track object from search...');
+                console.log('🎵 Track title:', track.info.title);
+                console.log('🎵 Track author:', track.info.author);
+                
+                console.log('🎵 Adding track to queue...');
+                
+                // Clear any existing disconnect timeout when adding a new track
+                if (player.disconnectTimeout) {
+                    clearTimeout(player.disconnectTimeout);
+                    player.disconnectTimeout = null;
+                    console.log('🎵 Cleared disconnect timeout - new track added');
+                }
+                
+                // Add the complete track object to queue
+                player.queue.add(track);
+                
+                // Play if not already playing
+                if (!player.playing && !player.paused) {
+                    await player.play();
+                    console.log('🎵 Track playback started successfully');
+                } else {
+                    console.log('🎵 Track added to queue, will play after current track');
+                }
+                
+                await initialResponse.edit(`🎵 **Now Playing:** ${track.info.title}\n👤 **Requested by:** ${user.username}\n🔊 **Channel:** ${voiceChannel.name}`);
+                
+            } catch (playError) {
+                console.error('🎵 Failed to play track:', playError);
+                await initialResponse.edit('❌ Failed to play the requested song.');
             }
-            
-            // Update response with success message
-            await initialResponse.edit(`🎵 **Now Playing:** ${track.info.title}\n👤 **Requested by:** ${user.username}\n🔊 **Channel:** ${voiceChannel.name}`);
             
         } catch (error) {
             console.error('🎵 Error in play command:', error);
