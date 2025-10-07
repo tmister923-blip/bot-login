@@ -2185,6 +2185,15 @@ async function createBotClient(token) {
                 console.log(`🎵 Track ended: ${track.info.title}`);
             });
 
+            // Handle voice state updates
+            client.on("raw", (d) => {
+                if (d.t === "VOICE_STATE_UPDATE" || d.t === "VOICE_SERVER_UPDATE") {
+                    console.log(`🎵 Voice event received: ${d.t}`);
+                    console.log(`🎵 Voice event type: ${d.t}, guild_id: ${d.d?.guild_id}`);
+                    riffy.updateVoiceState(d);
+                }
+            });
+
             riffy.init(client.user.id);
             return true;
         }
