@@ -1458,8 +1458,14 @@ app.post('/api/music/search', async (req, res) => {
         }
 
         // Perform actual search using Lavalink
-        // Use Riffy's node to load tracks
-        const node = client.riffy.nodes.first();
+        // Get the first available node from Riffy
+        const nodes = client.riffy.nodes;
+        if (!nodes || nodes.size === 0) {
+            return res.status(500).json({ error: 'No Lavalink nodes available' });
+        }
+        
+        // Get the first node (Riffy stores nodes in a Map)
+        const node = nodes.values().next().value;
         if (!node) {
             return res.status(500).json({ error: 'No Lavalink node available' });
         }
