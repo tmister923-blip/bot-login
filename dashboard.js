@@ -3923,8 +3923,11 @@ class DiscordBotDashboard {
     }
 
     async playTrack(url, title, author, thumbnail) {
+        console.log('🎵 playTrack called with:', { url, title, author, thumbnail });
         const guildId = document.getElementById('musicServerSelect').value;
         const userId = document.getElementById('musicUserId').value;
+
+        console.log('🎵 Guild ID:', guildId, 'User ID:', userId);
 
         if (!guildId || !userId) {
             this.showStatus('Please select a server and enter your user ID', 'error');
@@ -3961,8 +3964,11 @@ class DiscordBotDashboard {
     }
 
     async addToQueue(url, title, author, thumbnail) {
+        console.log('➕ addToQueue called with:', { url, title, author, thumbnail });
         const guildId = document.getElementById('musicServerSelect').value;
         const userId = document.getElementById('musicUserId').value;
+
+        console.log('➕ Guild ID:', guildId, 'User ID:', userId);
 
         if (!guildId || !userId) {
             this.showStatus('Please select a server and enter your user ID', 'error');
@@ -4184,6 +4190,9 @@ class DiscordBotDashboard {
 }
 
 // Initialize dashboard when page loads
+let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
-    new DiscordBotDashboard();
+    dashboard = new DiscordBotDashboard();
+    // Make dashboard globally accessible
+    window.dashboard = dashboard;
 });
