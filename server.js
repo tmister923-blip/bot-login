@@ -1485,8 +1485,9 @@ app.post('/api/music/search', async (req, res) => {
             author: track.info.author,
             duration: track.info.length,
             thumbnail: track.info.artworkUrl || `https://img.youtube.com/vi/${track.info.identifier}/hqdefault.jpg`,
-            url: track.track,
-            identifier: track.info.identifier
+            url: track.info.uri || `https://www.youtube.com/watch?v=${track.info.identifier}`, // Use YouTube URL instead of base64 track
+            identifier: track.info.identifier,
+            trackData: track.track // Keep the base64 track data for playback
         }));
 
         res.json({ success: true, results: formattedResults });
@@ -1574,37 +1575,37 @@ app.post('/api/music/play', async (req, res) => {
         console.log('🎵 Connection established, proceeding with playback');
 
         // Play the track using the correct Riffy method
-        console.log('🎵 Playing track:', trackUrl);
+        console.log('🎵 Playing track data:', trackUrl.substring(0, 50) + '...');
+        console.log('🎵 Track data type:', typeof trackUrl);
+        console.log('🎵 Track data length:', trackUrl.length);
+        
         try {
-            // First, resolve the track to get the proper track object
-            const resolve = await client.riffy.resolve({
-                query: trackUrl,
-                requester: { id: userId, username: 'Dashboard User' }
-            });
+            // The trackUrl is actually base64-encoded track data from the search
+            // We need to decode it and use it directly
+            console.log('🎵 Using pre-resolved track data...');
             
-            console.log('🎵 Track resolved, loadType:', resolve.loadType);
-            console.log('🎵 Full resolve result:', JSON.stringify(resolve, null, 2));
-            
-            if (resolve.loadType === "search" || resolve.loadType === "track") {
-                const track = resolve.tracks[0]; // Get the first track
-                console.log('🎵 Adding track to queue:', track.info.title);
-                
-                // Add track to queue
-                player.queue.add(track);
-                
-                // Play if not already playing
-                if (!player.playing && !player.paused) {
-                    await player.play();
-                    console.log('🎵 Track playback started successfully');
-                } else {
-                    console.log('🎵 Track added to queue, will play after current track');
+            // Create a track object from the base64 data
+            const track = {
+                track: trackUrl, // This is the base64 track data
+                info: {
+                    title: 'Track from search',
+                    author: 'Unknown',
+                    length: 0,
+                    identifier: 'search-result'
                 }
-            } else if (resolve.loadType === "error") {
-                console.error('🎵 Track resolution error:', resolve.exception);
-                throw new Error(`Track resolution failed: ${resolve.exception?.message || 'Unknown error'}`);
+            };
+            
+            console.log('🎵 Adding track to queue...');
+            
+            // Add track to queue
+            player.queue.add(track);
+            
+            // Play if not already playing
+            if (!player.playing && !player.paused) {
+                await player.play();
+                console.log('🎵 Track playback started successfully');
             } else {
-                console.error('🎵 Unexpected loadType:', resolve.loadType);
-                throw new Error(`Invalid track format: ${resolve.loadType}`);
+                console.log('🎵 Track added to queue, will play after current track');
             }
         } catch (playError) {
             console.error('🎵 Failed to play track:', playError);
