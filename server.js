@@ -2384,7 +2384,7 @@ async function createBotClient(token) {
         });
 
         // Automatically initialize Lavalink with provided configuration
-        const lavalinkConfig = {
+        lavalinkConfig = {
             name: "cocaine",
             password: "cocaine",
             host: "pnode1.danbot.host",
