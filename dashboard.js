@@ -3908,10 +3908,10 @@ class DiscordBotDashboard {
                         <p>${track.author} • ${this.formatDuration(track.duration)}</p>
                     </div>
                     <div class="search-result-actions">
-                        <button class="btn btn-primary btn-sm" onclick="dashboard.playTrack('${track.trackData}', '${track.title}', '${track.author}', '${track.thumbnail}')">
+                        <button class="btn btn-primary btn-sm" onclick="dashboard.playTrack('${encodeURIComponent(JSON.stringify(track.fullTrack))}', '${track.title}', '${track.author}', '${track.thumbnail}')">
                             <i class="fas fa-play"></i> Play
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="dashboard.addToQueue('${track.trackData}', '${track.title}', '${track.author}', '${track.thumbnail}')">
+                        <button class="btn btn-secondary btn-sm" onclick="dashboard.addToQueue('${encodeURIComponent(JSON.stringify(track.fullTrack))}', '${track.title}', '${track.author}', '${track.thumbnail}')">
                             <i class="fas fa-plus"></i> Add to Queue
                         </button>
                     </div>
