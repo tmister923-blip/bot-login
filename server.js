@@ -1583,6 +1583,7 @@ app.post('/api/music/play', async (req, res) => {
             });
             
             console.log('🎵 Track resolved, loadType:', resolve.loadType);
+            console.log('🎵 Full resolve result:', JSON.stringify(resolve, null, 2));
             
             if (resolve.loadType === "search" || resolve.loadType === "track") {
                 const track = resolve.tracks[0]; // Get the first track
@@ -1598,8 +1599,12 @@ app.post('/api/music/play', async (req, res) => {
                 } else {
                     console.log('🎵 Track added to queue, will play after current track');
                 }
+            } else if (resolve.loadType === "error") {
+                console.error('🎵 Track resolution error:', resolve.exception);
+                throw new Error(`Track resolution failed: ${resolve.exception?.message || 'Unknown error'}`);
             } else {
-                throw new Error('Invalid track format');
+                console.error('🎵 Unexpected loadType:', resolve.loadType);
+                throw new Error(`Invalid track format: ${resolve.loadType}`);
             }
         } catch (playError) {
             console.error('🎵 Failed to play track:', playError);
