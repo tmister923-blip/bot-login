@@ -1404,12 +1404,12 @@ app.post('/api/music/connect-lavalink', async (req, res) => {
 
                 client.riffy.on("nodeConnect", (node) => {
                     console.log(`🎵 Lavalink node "${node.name}" connected.`);
-                    console.log(`🎵 Node info:`, JSON.stringify(node, null, 2));
+                    console.log(`🎵 Node name: ${node.name}, connected: ${node.connected}`);
                 });
 
                 client.riffy.on("nodeError", (node, error) => {
                     console.log(`❌ Lavalink node "${node.name}" error: ${error.message}`);
-                    console.log(`❌ Node error details:`, JSON.stringify(error, null, 2));
+                    console.log(`❌ Error type: ${error.constructor.name}`);
                 });
 
                 client.riffy.on("trackStart", async (player, track) => {
@@ -1439,7 +1439,7 @@ app.post('/api/music/connect-lavalink', async (req, res) => {
                 client.on("raw", (d) => {
                     if (d.t === "VOICE_STATE_UPDATE" || d.t === "VOICE_SERVER_UPDATE") {
                         console.log(`🎵 Voice event received: ${d.t}`);
-                        console.log(`🎵 Voice event data:`, JSON.stringify(d, null, 2));
+                        console.log(`🎵 Voice event type: ${d.t}, guild_id: ${d.d?.guild_id}`);
                         client.riffy.updateVoiceState(d);
                     }
                 });
@@ -1485,9 +1485,11 @@ app.post('/api/music/search', async (req, res) => {
             requester: { id: userId, username: 'Dashboard User' }
         });
         
-        console.log('Search results:', JSON.stringify(searchResults, null, 2));
-        console.log('Load type:', searchResults.loadType);
+        console.log('Search results loadType:', searchResults.loadType);
         console.log('Tracks count:', searchResults.tracks ? searchResults.tracks.length : 0);
+        if (searchResults.tracks && searchResults.tracks.length > 0) {
+            console.log('First track title:', searchResults.tracks[0].info.title);
+        }
         
         if (!searchResults || !searchResults.tracks || searchResults.tracks.length === 0) {
             return res.json({ success: true, results: [] });
