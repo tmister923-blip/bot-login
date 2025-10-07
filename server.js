@@ -2383,8 +2383,22 @@ async function createBotClient(token) {
             });
         });
 
+        // Automatically initialize Lavalink with provided configuration
+        const lavalinkConfig = {
+            name: "cocaine",
+            password: "cocaine",
+            host: "pnode1.danbot.host",
+            port: 1351,
+            secure: false
+        };
+        
+        console.log('🎵 Auto-initializing Lavalink with provided configuration...');
+        initializeLavalink(lavalinkConfig);
+        client.riffy = riffy;
+
         botClients.set(token, client);
         console.log(`✅ Bot client created and ready for token: ${token.substring(0, 10)}...`);
+        console.log('🎵 Lavalink initialized with cocaine node');
         
         // Remove from login in progress
         loginInProgress.delete(token);
@@ -3374,6 +3388,8 @@ async function handleMessageCommand(message, command) {
             await handleBeautyCommand(message);
         } else if (command.type === 'matching') {
             await handleMatchingCommand(message);
+        } else if (command.type === 'play') {
+            await handlePlayCommand(message);
         }
         
         console.log(`🎯 Command executed: ${command.trigger} by ${message.author.tag} in ${message.guild.name}`);
@@ -3796,6 +3812,124 @@ async function handleMatchingCommand(message) {
     } catch (error) {
         console.error('Error handling matching command:', error);
         await message.reply('❌ An error occurred while calculating compatibility.');
+    }
+}
+
+// Handle the 'play' command - play music using Lavalink
+async function handlePlayCommand(message) {
+    try {
+        const user = message.author;
+        const guild = message.guild;
+        const guildId = guild.id;
+        const userId = user.id;
+        
+        // Extract song query from message content
+        const content = message.content;
+        const trigger = content.split(' ')[0];
+        const songQuery = content.substring(trigger.length).trim();
+        
+        if (!songQuery) {
+            await message.reply('❌ Please provide a song name or YouTube link!');
+            return;
+        }
+        
+        console.log(`🎵 Play command: "${songQuery}" by ${user.tag} in ${guild.name}`);
+        
+        // Check if user is in a voice channel
+        const member = guild.members.cache.get(userId);
+        if (!member || !member.voice.channel) {
+            await message.reply('❌ You need to be in a voice channel to use this command!');
+            return;
+        }
+        
+        const voiceChannel = member.voice.channel;
+        
+        // Get the bot client
+        const client = message.client;
+        
+        // Check if Lavalink is initialized
+        if (!client.riffy) {
+            await message.reply('❌ Music system is not initialized. Please contact an administrator.');
+            return;
+        }
+        
+        // Check if bot has permission to join the voice channel
+        const botMember = guild.members.cache.get(client.user.id);
+        if (!botMember) {
+            await message.reply('❌ Bot is not in this server.');
+            return;
+        }
+        
+        const permissions = voiceChannel.permissionsFor(botMember);
+        if (!permissions.has('Connect') || !permissions.has('Speak')) {
+            await message.reply('❌ Bot does not have permission to join or speak in this voice channel.');
+            return;
+        }
+        
+        // Send initial response
+        const initialResponse = await message.reply(`🔍 Searching for: **${songQuery}**...`);
+        
+        try {
+            // Search for the track using Lavalink
+            const searchResults = await client.riffy.resolve({
+                query: songQuery,
+                requester: { id: userId, username: user.username }
+            });
+            
+            if (!searchResults || !searchResults.tracks || searchResults.tracks.length === 0) {
+                await initialResponse.edit('❌ No results found for your search.');
+                return;
+            }
+            
+            const track = searchResults.tracks[0];
+            console.log(`🎵 Found track: ${track.info.title} by ${track.info.author}`);
+            
+            // Get or create player
+            let player = client.riffy.players.get(guildId);
+            if (!player) {
+                console.log(`🎵 Creating new player for guild: ${guildId}`);
+                console.log(`🎵 Voice channel ID: ${voiceChannel.id}`);
+                
+                try {
+                    player = client.riffy.createConnection({
+                        guildId: guildId,
+                        voiceChannel: voiceChannel.id,
+                        textChannel: message.channel.id,
+                        deaf: true
+                    });
+                    console.log('🎵 Connection created successfully');
+                } catch (error) {
+                    console.error('🎵 Error creating connection:', error);
+                    await initialResponse.edit('❌ Failed to connect to voice channel.');
+                    return;
+                }
+            } else {
+                console.log('🎵 Using existing connection for guild:', guildId);
+            }
+            
+            // Wait a moment for the connection to establish
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Add track to queue
+            player.queue.add(track);
+            
+            // Play if not already playing
+            if (!player.playing && !player.paused) {
+                await player.play();
+                console.log('🎵 Track playback started successfully');
+            }
+            
+            // Update response with success message
+            await initialResponse.edit(`🎵 **Now Playing:** ${track.info.title}\n👤 **Requested by:** ${user.username}\n🔊 **Channel:** ${voiceChannel.name}`);
+            
+        } catch (error) {
+            console.error('🎵 Error in play command:', error);
+            await initialResponse.edit('❌ Failed to play the requested song.');
+        }
+        
+    } catch (error) {
+        console.error('Error handling play command:', error);
+        await message.reply('❌ An error occurred while trying to play music.');
     }
 }
 
