@@ -1412,11 +1412,21 @@ app.post('/api/music/connect-lavalink', async (req, res) => {
 
                 client.riffy.on("trackStart", async (player, track) => {
                     console.log(`🎵 Now playing: ${track.info.title} by ${track.info.author}`);
+                    // Clear any existing disconnect timeout when a new track starts
+                    if (player.disconnectTimeout) {
+                        clearTimeout(player.disconnectTimeout);
+                        player.disconnectTimeout = null;
+                        console.log("🎵 Cleared disconnect timeout - music is playing");
+                    }
                 });
 
                 client.riffy.on("queueEnd", async (player) => {
-                    console.log("🎵 Queue ended");
-                    player.destroy();
+                    console.log("🎵 Queue ended - setting 5 minute timeout before disconnect");
+                    // Set a timeout to disconnect after 5 minutes of inactivity
+                    player.disconnectTimeout = setTimeout(() => {
+                        console.log("🎵 Disconnecting due to inactivity");
+                        player.destroy();
+                    }, 300000); // 5 minutes in milliseconds
                 });
 
                 client.riffy.on("trackEnd", async (player, track) => {
@@ -1590,6 +1600,13 @@ app.post('/api/music/play', async (req, res) => {
             console.log('🎵 Track author:', fullTrack.info.author);
             
             console.log('🎵 Adding track to queue...');
+            
+            // Clear any existing disconnect timeout when adding a new track
+            if (player.disconnectTimeout) {
+                clearTimeout(player.disconnectTimeout);
+                player.disconnectTimeout = null;
+                console.log('🎵 Cleared disconnect timeout - new track added');
+            }
             
             // Add the complete track object to queue
             player.queue.add(fullTrack);
