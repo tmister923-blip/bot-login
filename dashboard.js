@@ -4012,8 +4012,8 @@ class DiscordBotDashboard {
         }
 
         try {
-            // Always use pause endpoint - it handles both pause and resume
-            const response = await fetch('/api/music/pause', {
+            const endpoint = this.musicPlayer.isPlaying ? '/api/music/pause' : '/api/music/play';
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -4069,38 +4069,13 @@ class DiscordBotDashboard {
         }
     }
 
-    async nextTrack() {
-        const guildId = document.getElementById('musicServerSelect').value;
-        
-        if (!guildId) {
-            this.showStatus('Please select a server first', 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/music/next', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ guildId })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Remove the first track from local queue
-                if (this.musicPlayer.queue.length > 0) {
-                    this.musicPlayer.queue.shift();
-                    this.updateQueueDisplay();
-                }
-                this.showStatus('⏭️ Skipped to next track', 'success');
-            } else {
-                this.showStatus(`❌ Failed to skip: ${data.error}`, 'error');
-            }
-        } catch (error) {
-            console.error('Next track error:', error);
-            this.showStatus('❌ Failed to skip track', 'error');
+    nextTrack() {
+        if (this.musicPlayer.queue.length > 0) {
+            const nextTrack = this.musicPlayer.queue.shift();
+            this.playTrack(nextTrack.url, nextTrack.title, nextTrack.author, nextTrack.thumbnail);
+            this.updateQueueDisplay();
+        } else {
+            this.showStatus('No tracks in queue', 'info');
         }
     }
 
