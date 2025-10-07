@@ -3960,10 +3960,41 @@ class DiscordBotDashboard {
         }
     }
 
-    addToQueue(url, title, author, thumbnail) {
-        this.musicPlayer.queue.push({ url, title, author, thumbnail });
-        this.updateQueueDisplay();
-        this.showStatus(`➕ Added to queue: ${title}`, 'success');
+    async addToQueue(url, title, author, thumbnail) {
+        const guildId = document.getElementById('musicServerSelect').value;
+        const userId = document.getElementById('musicUserId').value;
+
+        if (!guildId || !userId) {
+            this.showStatus('Please select a server and enter your user ID', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/music/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    trackUrl: url,
+                    userId,
+                    guildId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.musicPlayer.queue.push({ url, title, author, thumbnail });
+                this.updateQueueDisplay();
+                this.showStatus(`➕ Added to queue: ${title}`, 'success');
+            } else {
+                this.showStatus(`❌ Failed to add to queue: ${data.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Add to queue error:', error);
+            this.showStatus('❌ Failed to add to queue', 'error');
+        }
     }
 
     async togglePlayPause() {
