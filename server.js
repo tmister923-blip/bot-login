@@ -1543,71 +1543,64 @@ app.post('/api/music/play', async (req, res) => {
         console.log(`🎵 Attempting to play track: ${trackUrl}`);
         console.log(`🎵 User ${userId} in voice channel: ${voiceChannel.name} (${voiceChannel.id})`);
         
-        // Get or create player
+        // Get or create player using the correct Riffy method
         let player = client.riffy.players.get(guildId);
         if (!player) {
-            console.log('🎵 Creating new player for guild:', guildId);
+            console.log('🎵 Creating new connection for guild:', guildId);
             console.log('🎵 Voice channel ID:', voiceChannel.id);
-            console.log('🎵 Guild ID type:', typeof guildId);
             
             try {
-                // Try different parameter format for Riffy
-                player = client.riffy.createPlayer({
+                // Use the correct Riffy method: createConnection
+                player = client.riffy.createConnection({
                     guildId: guildId,
-                    voiceChannelId: voiceChannel.id,
-                    textChannelId: null,
-                    volume: 50,
-                    selfDeaf: true,
-                    selfMute: false,
-                    node: client.riffy.nodes.values().next().value
+                    voiceChannel: voiceChannel.id,
+                    textChannel: null, // We'll handle this separately
+                    deaf: true
                 });
-                console.log('🎵 Player created successfully');
+                console.log('🎵 Connection created successfully');
             } catch (error) {
-                console.error('🎵 Error creating player:', error);
-                // Try alternative approach
-                try {
-                    console.log('🎵 Trying alternative player creation...');
-                    player = client.riffy.createPlayer(guildId, {
-                        voiceChannelId: voiceChannel.id,
-                        textChannelId: null,
-                        volume: 50,
-                        selfDeaf: true,
-                        selfMute: false
-                    });
-                    console.log('🎵 Alternative player creation successful');
-                } catch (error2) {
-                    console.error('🎵 Alternative player creation failed:', error2);
-                    throw error2;
-                }
+                console.error('🎵 Error creating connection:', error);
+                throw error;
             }
         } else {
-            console.log('🎵 Using existing player for guild:', guildId);
+            console.log('🎵 Using existing connection for guild:', guildId);
         }
 
-        // Connect to voice channel if not already connected
-        if (!player.voiceChannelId || player.voiceChannelId !== voiceChannel.id) {
-            console.log('🎵 Connecting to voice channel:', voiceChannel.id);
-            try {
-                // Let Riffy handle the voice connection
-                await player.connect(voiceChannel.id);
-                console.log('🎵 Successfully connected Riffy player to voice channel');
-                
-                // Wait a moment for the connection to establish
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                console.log('🎵 Connection established, proceeding with playback');
-            } catch (connectError) {
-                console.error('🎵 Failed to connect to voice channel:', connectError);
-                throw connectError;
-            }
-        } else {
-            console.log('🎵 Already connected to voice channel:', voiceChannel.id);
-        }
+        // The createConnection method should handle the voice connection automatically
+        console.log('🎵 Connection should be established automatically by createConnection');
+        
+        // Wait a moment for the connection to establish
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('🎵 Connection established, proceeding with playback');
 
-        // Play the track
+        // Play the track using the correct Riffy method
         console.log('🎵 Playing track:', trackUrl);
         try {
-            await player.play(trackUrl);
-            console.log('🎵 Track playback started successfully');
+            // First, resolve the track to get the proper track object
+            const resolve = await client.riffy.resolve({
+                query: trackUrl,
+                requester: { id: userId, username: 'Dashboard User' }
+            });
+            
+            console.log('🎵 Track resolved, loadType:', resolve.loadType);
+            
+            if (resolve.loadType === "search" || resolve.loadType === "track") {
+                const track = resolve.tracks[0]; // Get the first track
+                console.log('🎵 Adding track to queue:', track.info.title);
+                
+                // Add track to queue
+                player.queue.add(track);
+                
+                // Play if not already playing
+                if (!player.playing && !player.paused) {
+                    await player.play();
+                    console.log('🎵 Track playback started successfully');
+                } else {
+                    console.log('🎵 Track added to queue, will play after current track');
+                }
+            } else {
+                throw new Error('Invalid track format');
+            }
         } catch (playError) {
             console.error('🎵 Failed to play track:', playError);
             throw playError;
