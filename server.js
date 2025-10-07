@@ -1458,24 +1458,15 @@ app.post('/api/music/search', async (req, res) => {
         }
 
         // Perform actual search using Lavalink
-        // Get the first available node from Riffy
-        const nodes = client.riffy.nodes;
-        if (!nodes || nodes.size === 0) {
-            return res.status(500).json({ error: 'No Lavalink nodes available' });
-        }
-        
-        // Get the first node (Riffy stores nodes in a Map)
-        const node = nodes.values().next().value;
-        if (!node) {
-            return res.status(500).json({ error: 'No Lavalink node available' });
-        }
-        
-        const searchResults = await node.loadTracks({
+        // Use Riffy's resolve method for searching
+        const searchResults = await client.riffy.resolve({
             query: query,
-            source: "ytmsearch"
+            requester: { id: userId, username: 'Dashboard User' }
         });
         
         console.log('Search results:', JSON.stringify(searchResults, null, 2));
+        console.log('Load type:', searchResults.loadType);
+        console.log('Tracks count:', searchResults.tracks ? searchResults.tracks.length : 0);
         
         if (!searchResults || !searchResults.tracks || searchResults.tracks.length === 0) {
             return res.json({ success: true, results: [] });
