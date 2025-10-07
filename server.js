@@ -2164,11 +2164,21 @@ async function createBotClient(token) {
 
             riffy.on("trackStart", async (player, track) => {
                 console.log(`🎵 Now playing: ${track.info.title} by ${track.info.author}`);
+                // Clear any existing disconnect timeout when a new track starts
+                if (player.disconnectTimeout) {
+                    clearTimeout(player.disconnectTimeout);
+                    player.disconnectTimeout = null;
+                    console.log("🎵 Cleared disconnect timeout - music is playing");
+                }
             });
 
             riffy.on("queueEnd", async (player) => {
-                console.log("🎵 Queue ended");
-                player.destroy();
+                console.log("🎵 Queue ended - setting 5 minute timeout before disconnect");
+                // Set a timeout to disconnect after 5 minutes of inactivity
+                player.disconnectTimeout = setTimeout(() => {
+                    console.log("🎵 Disconnecting due to inactivity");
+                    player.destroy();
+                }, 300000); // 5 minutes in milliseconds
             });
 
             riffy.on("trackEnd", async (player, track) => {
@@ -3884,7 +3894,7 @@ async function handlePlayCommand(message) {
             const track = searchResults.tracks[0];
             console.log(`🎵 Found track: ${track.info.title} by ${track.info.author}`);
             
-            // Use the same logic as the /api/music/play endpoint
+            // Use the exact same logic as the /api/music/play endpoint
             console.log(`🎵 Attempting to play track: ${track.info.title}`);
             console.log(`🎵 User ${userId} in voice channel: ${voiceChannel.name} (${voiceChannel.id})`);
             
@@ -3912,9 +3922,24 @@ async function handlePlayCommand(message) {
                 console.log('🎵 Using existing connection for guild:', guildId);
             }
 
+            // The createConnection method should handle the voice connection automatically
+            console.log('🎵 Connection should be established automatically by createConnection');
+            console.log('🎵 Player state before wait:', {
+                connected: player.connected,
+                voiceChannelId: player.voiceChannelId,
+                playing: player.playing,
+                paused: player.paused
+            });
+            
             // Wait a moment for the connection to establish
             await new Promise(resolve => setTimeout(resolve, 3000));
             console.log('🎵 Connection established, proceeding with playback');
+            console.log('🎵 Player state after wait:', {
+                connected: player.connected,
+                voiceChannelId: player.voiceChannelId,
+                playing: player.playing,
+                paused: player.paused
+            });
             
             try {
                 console.log('🎵 Using full track object from search...');
